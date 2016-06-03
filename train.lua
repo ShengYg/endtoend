@@ -192,7 +192,7 @@ end
 
 function Trainer:learningRate(epoch)
    -- Training schedule
-   return 1e-4/8
+   return 1e-4
 end
 
 return M.Trainer
