@@ -10,16 +10,16 @@ local createModel = require 'net_graph'
 local Trainer = require 'train'
 torch.manualSeed(40)
 
-continue = 1
+continue = 0
 if continue then
 --	new = {createModel(), 1, {0, 0, 0, 0.125, 0.25, 0.5}, {}, {}, {}}
-	new = torch.load('out/model_450')
+	new = torch.load('out/model_840')
 end
 
 local model = continue == 1 and new[1] or createModel()
 local crit = nn.MSECriterion():cuda()
---local loss_w = continue and new[3] or {0, 0, 0, 0.125, 0.25, 0.5}
-local loss_w = {0.125, 0.25, 0.5, 0.25, 0.125, 0}
+--local loss_w = {0.5, 0.5, 0.5, 0.5, 0.5, 0.5}
+local loss_w = {0, 0, 0, 0.125, 0.25, 0.5}
 local criterion = nn.ParallelCriterion():add(crit, loss_w[1]):add(crit, loss_w[2]):
 				add(crit, loss_w[3]):add(crit, loss_w[4]):add(crit, loss_w[5]):
 				add(crit, loss_w[6]):cuda()
@@ -73,7 +73,7 @@ end
 
 
 local trainer = Trainer(model, criterion, optimState)
-local nEpochs = 480
+local nEpochs = 100
 local trloss = continue == 1 and new[4] or {}
 local teloss = continue == 1 and new[5] or {}
 local prloss = continue == 1 and new[6] or {}
