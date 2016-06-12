@@ -192,7 +192,15 @@ end
 
 function Trainer:learningRate(epoch)
    -- Training schedule
-   return 1e-4
+   local lr
+   if epoch <= 620 then
+      lr = 1e-4/8
+   elseif epoch <= 640 then
+      lr = 1e-4/16
+   elseif epoch <= 660 then
+      lr = 1e-4/32
+   end
+   return lr
 end
 
 return M.Trainer
