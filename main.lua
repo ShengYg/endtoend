@@ -6,14 +6,14 @@ require 'nngraph'
 require 'nnx'
 require 'optim'
 
-local createModel = require 'net_graph'
+local createModel = require 'net_graph_res'
 local Trainer = require 'train'
 torch.manualSeed(40)
 
 continue = 0
 if continue then
---	new = {createModel(), 1, {0, 0, 0, 0.125, 0.25, 0.5}, {}, {}, {}}
-	new = torch.load('out/model_840')
+	new = {createModel(), 1, {0, 0, 0, 0.125, 0.25, 0.5}, {}, {}, {}}
+--	new = torch.load('out/model_590')
 end
 
 local model = continue == 1 and new[1] or createModel()
