@@ -3,15 +3,16 @@ require 'cutorch'
 require 'cudnn'
 require 'nngraph'
 require 'nnx'
+require 'cunn'
 
 local Conv = cudnn.SpatialConvolution
 local ReLU = cudnn.ReLU
 local Concat = nn.ConcatTable
 local DeConv = cudnn.SpatialFullConvolution
 local Join = nn.JoinTable
-local BN = nn.SpatialBatchNormalization
+local BN = cudnn.SpatialBatchNormalization
 local ADD = nn.CAddTable
-local Ave = nn.SpatialAveragePooling
+local Ave = cudnn.SpatialAveragePooling
 
 local M = {}
 
@@ -23,19 +24,24 @@ local function createModel()
 	conv1 = ReLU(true)(BN(64)(conv1a))
 	conv2a = ReLU(true)(BN(128)(Conv(64, 128, 3, 3, 2, 2, 1, 1)(conv1)))
 	conv2b = ReLU(true)(BN(128)(Conv(128, 128, 3, 3, 1, 1, 1, 1)(conv2a)))
-	conv2 = ReLU(true)(ADD(true)({conv2b, Ave(1, 1, 2, 2)(conv1)}))
+	conv2c = Join(2)({nn.Identity()(Ave(1, 1, 2, 2)(conv1)), nn.MulConstant(0)(Ave(1, 1, 2, 2)(conv1))})
+	conv2 = ReLU(true)(ADD(true)({conv2b, conv2c}))
 	conv3a = ReLU(true)(BN(256)(Conv(128, 256, 3, 3, 2, 2, 1, 1)(conv2)))
 	conv3b = ReLU(true)(BN(256)(Conv(256, 256, 3, 3, 1, 1, 1, 1)(conv3a)))
-	conv3 = ReLU(true)(ADD(true)({conv3b, Ave(1, 1, 2, 2)(conv2)}))
+	conv3c = Join(2)({nn.Identity()(Ave(1, 1, 2, 2)(conv2)), nn.MulConstant(0)(Ave(1, 1, 2, 2)(conv2))})
+	conv3 = ReLU(true)(ADD(true)({conv3b, conv3c}))
 	conv4a = ReLU(true)(BN(512)(Conv(256, 512, 3, 3, 2, 2, 1, 1)(conv3)))
 	conv4b = ReLU(true)(BN(512)(Conv(512, 512, 3, 3, 1, 1, 1, 1)(conv4a)))
-	conv4 = ReLU(true)(ADD(true)({conv4b, Ave(1, 1, 2, 2)(conv3)}))
-	conv5a = ReLU(true)(BN(512)(Conv(256, 512, 3, 3, 2, 2, 1, 1)(conv4)))
+	conv4c = Join(2)({nn.Identity()(Ave(1, 1, 2, 2)(conv3)), nn.MulConstant(0)(Ave(1, 1, 2, 2)(conv3))})
+	conv4 = ReLU(true)(ADD(true)({conv4b, conv4c}))
+	conv5a = ReLU(true)(BN(512)(Conv(512, 512, 3, 3, 2, 2, 1, 1)(conv4)))
 	conv5b = ReLU(true)(BN(512)(Conv(512, 512, 3, 3, 1, 1, 1, 1)(conv5a)))
-	conv5 = ReLU(true)(ADD(true)({conv5b, Ave(1, 1, 2, 2)(conv4)}))
+	conv5c = nn.Identity()(Ave(1, 1, 2, 2)(conv4))
+	conv5 = ReLU(true)(ADD(true)({conv5b, conv5c}))
 	conv6a = ReLU(true)(BN(1024)(Conv(512, 	1024, 3, 3, 2, 2, 1, 1)(conv5)))
 	conv6b = ReLU(true)(BN(1024)(Conv(1024, 1024, 3, 3, 1, 1, 1, 1)(conv6a)))
-	conv6 = ReLU(true)(ADD(true)({conv6b, Ave(1, 1, 2, 2)(conv5)}))
+	conv6c = Join(2)({nn.Identity()(Ave(1, 1, 2, 2)(conv5)), nn.MulConstant(0)(Ave(1, 1, 2, 2)(conv5))})
+	conv6 = ReLU(true)(ADD(true)({conv6b, conv6c}))
 
 	upconv5 = ReLU(true)(BN(512)(DeConv(1024, 512, 4, 4, 2, 2, 1, 1)(conv6)))
 	pr6 = Conv(1024, 1, 3, 3, 1, 1, 1, 1)(conv6)
@@ -64,9 +70,8 @@ local function createModel()
 	pr1 = Conv(32, 1, 3, 3, 1, 1, 1, 1)(iconv1)
 
 	net = nn.gModule({conv1a}, {pr1, pr2, pr3, pr4, pr5, pr6})
-	net:cuda()
 
-	return net
+	return net:cuda()
 end
 
 return createModel
