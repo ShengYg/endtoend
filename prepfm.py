@@ -136,8 +136,8 @@ for i in range(222001,222801):
     dispnoc.append(disp.astype(np.float32))
 
 
-subprocess.check_call('rm -f {}/*.{{bin,dim,txt,type}}'.format(output_dir), shell=True)
+#subprocess.check_call('rm -f {}/*.{{bin,dim,txt,type}}'.format(output_dir), shell=True)
 
 for i in range(len(dispnoc)):
-    tofile('{}/dispnoc_{}.bin'.format(output_dir, i + 1), dispnoc[i])
+    tofile('{}/dispnoc_{:04d}.bin'.format(output_dir, i + 1), dispnoc[i])
 
